@@ -6,6 +6,8 @@
 # https://doc.scrapy.org/en/latest/topics/items.html
 
 import scrapy
+import re
+
 from scrapy.loader.processors import TakeFirst, Join, MapCompose
 from datetime import datetime, timedelta
 
@@ -67,57 +69,70 @@ def parse_date(date):
 
     #sanity check
     date = [i.lower() for i in date if i]
-    if len(date) == 0:
-        return 'Error: no data'
+    try:
+        if len(date) == 0:
+            return 'Error: no data'
 
-    #no check for today
-    #elif len(date) == 1 or date[1] == 'h':
-        #pass
+        #no check for today
+        #elif len(date) == 1 or date[1] == 'h':
+            #pass
 
-    #yesterday
-    elif date[0] == 'yesterday' or (date[1] == 'hrs'):
-        day = int(str(datetime.now().date() - timedelta(1)).split(sep='-')[2])
+        #yesterday
+        elif date[0] == 'yesterday' or (date[1] == 'hrs'):
+            day = int(str(datetime.now().date() - timedelta(1)).split(sep='-')[2])
 
-    #day with 3 month length of this year
-    elif (len(date) == 2 and len(date[1]) == 3) or (len(date) == 4 and len(date[1]) == 3):
-        day = int(date[0])
-        month = months_short[date[1]]
+        #day with 3 month length of this year
+        elif (len(date) == 2 and len(date[1]) == 3) or (len(date) == 4 and len(date[1]) == 3):
+            day = int(date[0])
+            month = months_short[date[1]]
 
-    #day of this year
-    elif date[0].isdigit() and date[2] == 'at':
-        day = int(date[0])
-        month = months[date[1]]
+        #day of this year
+        elif date[0].isdigit() and date[2] == 'at':
+            day = int(date[0])
+            month = months[date[1]]
 
-    #usual dates, with regular length month
-    elif date[0].isdigit() and date[2].isdigit():
-        day = int(date[0])
-        month = months[date[1]]
-        year = int(date[2])
+        #usual dates, with regular length month
+        elif date[0].isdigit() and date[2].isdigit():
+            day = int(date[0])
+            month = months[date[1]]
+            year = int(date[2])
 
-    #dates with weekdays (this function assumes that the month is the same)
-    elif not date[0].isdigit() and not date[1].isdigit():
-        today = datetime.now().weekday()  # today as a weekday
-        weekday = days[date[0]]  # day to be match as number weekday
-        #weekday is chronologically always lower than day
-        if weekday < today:
-            day -= today - weekday
-        elif weekday > today:
-            weekday += 7
-            day -= today - weekday
-    elif len(date) == 5:  # 21 december 2011 at 17:31
-        day = int(date[1])
-        month = months[date[0]]
-        # hour = date[4]
-        # minute = date
-    else:
-        #date item parser fail. datetime format unknown, check xpath selector or change the language of the interface'
-        return f'Error date:{date}'
+        #dates with weekdays (this function assumes that the month is the same)
+        elif not date[0].isdigit() and not date[1].isdigit():
+            today = datetime.now().weekday()  # today as a weekday
+            weekday = days[date[0]]  # day to be match as number weekday
+            #weekday is chronologically always lower than day
+            if weekday < today:
+                day -= today - weekday
+            elif weekday > today:
+                weekday += 7
+                day -= today - weekday
+        elif len(date) == 5:  # 21 december 2011 at 17:31
+            day = int(date[1])
+            month = months[date[0]]
+            # hour = date[4]
+            # minute = date
+        else:
+            #date item parser fail. datetime format unknown, check xpath selector or change the language of the interface'
+            return f'Error date:{date}'
+    except:
+        pass
     date = datetime(year, month, day)
     return date.date()
 
 
 def comments_strip(string):
-    return string[0].rstrip(' Comments')
+    try:
+        return int(string[0].rstrip(' Comments'))
+    except:
+        print(f'ERRRRRRRRRRR {string}')
+
+
+def shares_strip(string):
+    try:
+        return int(string[0].rstrip(' Shares'))
+    except:
+        print(f'ERRRRRRRRRRR {string}')
 
 
 def reactions_strip(string):
@@ -128,19 +143,28 @@ def reactions_strip(string):
         string = string[0]
         while string.rfind('.') != -1:
             string = string[0:string.rfind('.')] + string[string.rfind('.') + 1:]
-        return string
+        result = string
 
     string = string[0]
     while string.rfind('.') != -1:
         string = string[0:string.rfind('.')] + string[string.rfind('.') + 1:]
 
     if not string.isdigit():
-        return e
+        result = e
     else:
-        return int(string) + friends
+        result = int(string) + friends
+    return int(result)
 
 
-class FbPostItem(scrapy.Item):
+def simplify_url(string):
+    return re.sub(r'&refid.*$', '', string[0])
+
+
+def cast_to_int(string):
+    return int(string[0])
+
+
+class PostItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
 
@@ -156,6 +180,7 @@ class FbPostItem(scrapy.Item):
     text = scrapy.Field(output_processor=Join(separator=u''))  # full text of the post
 
     comments = scrapy.Field(output_processor=comments_strip)
+    comment_items = scrapy.Field()
     commentators = scrapy.Field(output_processor=Join(separator=u'\n'))
 
     reactions = scrapy.Field(output_processor=reactions_strip)  # num of reactions
@@ -163,10 +188,17 @@ class FbPostItem(scrapy.Item):
     likes = scrapy.Field(
         output_processor=reactions_strip
     )
-    ahah = scrapy.Field()
-    love = scrapy.Field()
-    wow = scrapy.Field()
-    sigh = scrapy.Field()
-    grrr = scrapy.Field()
-    share = scrapy.Field()  # num of shares
-    url = scrapy.Field()
+    ahah = scrapy.Field(output_processor=cast_to_int)
+    love = scrapy.Field(output_processor=cast_to_int)
+    wow = scrapy.Field(output_processor=cast_to_int)
+    sigh = scrapy.Field(output_processor=cast_to_int)
+    grrr = scrapy.Field(output_processor=cast_to_int)
+    shares = scrapy.Field(output_processor=shares_strip)
+    url = scrapy.Field(output_processor=simplify_url)
+
+
+class CommentItem(scrapy.Item):
+    source = scrapy.Field(output_processor=TakeFirst())
+
+    text = scrapy.Field(output_processor=Join(separator=u''))  # full text of the post
+    replies = scrapy.Field()

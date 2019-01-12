@@ -65,9 +65,9 @@ ROBOTSTXT_OBEY = False
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'fbcrawler.pipelines.FbcrawlerPipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'fbcrawler.pipelines.FbcrawlerPipeline': 1,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -89,8 +89,8 @@ ROBOTSTXT_OBEY = False
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
-FEED_EXPORT_FIELDS = ['source', 'date', 'text', 'reactions', 'likes', 'ahah', 'love', 'wow',
-                      'sigh', 'grrr', 'comments', 'url']  # specifies the order of the column to export as CSV
+FEED_EXPORT_FIELDS = ['source', 'url', 'date', 'text', 'shares', 'reactions', 'likes', 'ahah', 'love', 'wow',
+                      'sigh', 'grrr', 'comments', 'comment_items']  # specifies the order of the column to export as CSV
 FEED_EXPORT_ENCODING = 'utf-8'
 DUPEFILTER_DEBUG = True
 LOG_LEVEL = 'DEBUG'
