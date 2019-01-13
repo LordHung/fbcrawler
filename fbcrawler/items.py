@@ -136,7 +136,6 @@ def shares_strip(string):
 
 
 def reactions_strip(string):
-    print(f'DEBUG REACTIONS: {string}')
     friends = 1 + string[0].count(',')
     e = 1 + string[0].count(' e ')
     string = string[0].split()[::-1]
@@ -162,7 +161,6 @@ def simplify_url(string):
 
 
 def cast_to_int(string):
-    print(f'DEBUG react value {string}')
     if string[0]:
         thousand = string[0].split('K')[0] if 'K' in string[0] else 0
         if thousand:
@@ -173,19 +171,15 @@ def cast_to_int(string):
 
 
 class PostItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-
-    # page that published the post
+    # page name
     source = scrapy.Field(output_processor=TakeFirst())
 
-    # when was the post published
     date = scrapy.Field(
         input_processor=TakeFirst(),
         output_processor=parse_date
     )
 
-    text = scrapy.Field(output_processor=Join(separator=u''))  # full text of the post
+    text = scrapy.Field(output_processor=Join(separator=u''))
 
     comments = scrapy.Field(output_processor=comments_strip)
     comment_items = scrapy.Field()
@@ -206,5 +200,5 @@ class PostItem(scrapy.Item):
 class CommentItem(scrapy.Item):
     source = scrapy.Field(output_processor=TakeFirst())
 
-    text = scrapy.Field(output_processor=Join(separator=u''))  # full text of the post
+    text = scrapy.Field(output_processor=Join(separator=u''))
     replies = scrapy.Field()

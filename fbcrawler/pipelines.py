@@ -25,7 +25,6 @@ class FbcrawlerPipeline(object):
             item.setdefault('love', 0)
             item.setdefault('ahah', 0)
             item.setdefault('sigh', 0)
-            print(f'TEST {item["comments"]}, {len(item["comment_items"])}, {item["reactions"]}')
             if item['comments'] == len(item['comment_items']) and item['reactions'] == sum([item['likes'],
                                                                                             item['love'],
                                                                                             item['grrr'],
