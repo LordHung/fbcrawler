@@ -137,7 +137,7 @@ class FacebookSpider(scrapy.Spider):
     def parse_comments(self, response):
         root = ItemLoader(item=PostItem(), parent=response.meta['item'])
         coms = []
-        for com in response.xpath('//div[@id="root"]/div/div[2]/div/div[5]/div | //div[@id="root"]/div/div/div/div/div'):
+        for com in response.xpath('//div[@id="root"]/div/div/div/div/div'):
             new = ItemLoader(item=CommentItem(), selector=com)
             new.add_xpath('source', "./div/h3/a/text() | ./div/div/h3/a/text()")
             new.add_xpath('text', "./div/div/span[not(contains(text(),' · '))]/text() | ./div/div/text()")
@@ -149,25 +149,24 @@ class FacebookSpider(scrapy.Spider):
                 if found:
                     num_reps = found.group(1)
                     rep = response.urljoin(rep_link[0])
-                    yield scrapy.Request(rep, callback=self.parse_replies, meta={'com': new})
+                    yield scrapy.Request(rep, callback=self.parse_replies, meta={'com': new, 'item': root})
             coms.append(new.load_item())
 
         next_page = response.xpath("//div[contains(@id, 'see_next')]/a/@href")
         if len(next_page) > 0:
             next_page = response.urljoin(next_page[0].extract())
             yield scrapy.Request(next_page, callback=self.parse_comments, meta={'item': root})
-        if coms:
-            root.add_value('comment_items', [c for c in coms if c])
-            yield root.load_item()
+        root.add_value('comment_items', [c for c in coms if c])
+        yield root.load_item()
 
     def parse_replies(self, response):
         com = ItemLoader(item=CommentItem(), parent=response.meta['com'])
+        root = ItemLoader(item=PostItem(), parent=response.meta['item'])
         reps = []
-        for rep in response.xpath(" //div[@id='root']/div/div[3]/div/div | //div[@id='root']/div/div/div"):
+        for rep in response.xpath("//div[@id='root']/div/div/div/div"):
             new = ItemLoader(item=CommentItem(), selector=rep)
             new.add_xpath('source', ".//h3/a/text()")
             new.add_xpath('text', ".//span[not(contains(text(), ' · ')) and not(contains(text(), 'View more'))]/text() | .//div/text()")
             reps.append(new.load_item())
-        if reps:
-            com.add_value('replies', [r for r in reps if r])
-            yield com.load_item()
+        com.add_value('replies', [r for r in reps if r])
+        yield com.load_item()

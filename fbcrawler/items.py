@@ -114,46 +114,22 @@ def parse_date(date):
             # minute = date
         else:
             #date item parser fail. datetime format unknown, check xpath selector or change the language of the interface'
-            return f'Error date:{date}'
+            # return f'Error date:{date}'
+            return f'{date}'
     except:
-        pass
+        return f'{date}'
     date = datetime(year, month, day)
     return date.date()
 
 
 def comments_strip(string):
-    try:
+    if len(string):
         return int(string[0].rstrip(' Comments'))
-    except:
-        print(f'No comments {string}')
 
 
 def shares_strip(string):
-    try:
+    if len(string):
         return int(string[0].rstrip(' Shares'))
-    except:
-        print(f'Can\'t get shares {string}')
-
-
-def reactions_strip(string):
-    friends = 1 + string[0].count(',')
-    e = 1 + string[0].count(' e ')
-    string = string[0].split()[::-1]
-    if len(string) == 1:
-        string = string[0]
-        while string.rfind('.') != -1:
-            string = string[0:string.rfind('.')] + string[string.rfind('.') + 1:]
-        result = string
-
-    string = string[0]
-    while string.rfind('.') != -1:
-        string = string[0:string.rfind('.')] + string[string.rfind('.') + 1:]
-
-    if not string.isdigit():
-        result = e
-    else:
-        result = int(string) + int(friends)
-    return int(result)
 
 
 def simplify_url(string):
@@ -161,9 +137,13 @@ def simplify_url(string):
 
 
 def cast_to_int(string):
-    if string[0]:
-        thousand = string[0].split('K')[0] if 'K' in string[0] else 0
-        if thousand:
+    if len(string):
+        result = string[0]
+        thousand = result.split('K')[0] if 'K' in result else 0
+        you_and_others = re.match('You and (\d+) others', result)
+        if you_and_others:
+            result = int(you_and_others.group(1)) + 1
+        elif thousand:
             result = float(thousand) * 1000.0
         else:
             result = string[0]
@@ -201,4 +181,5 @@ class CommentItem(scrapy.Item):
     source = scrapy.Field(output_processor=TakeFirst())
 
     text = scrapy.Field(output_processor=Join(separator=u''))
-    replies = scrapy.Field()
+    replies = scrapy.Field(output_processor=cast_to_int)
+    reply_items = scrapy.Field()

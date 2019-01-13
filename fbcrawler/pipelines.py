@@ -25,14 +25,17 @@ class FbcrawlerPipeline(object):
             item.setdefault('love', 0)
             item.setdefault('ahah', 0)
             item.setdefault('sigh', 0)
-            if item['comments'] == len(item['comment_items']) and item['reactions'] == sum([item['likes'],
-                                                                                            item['love'],
-                                                                                            item['grrr'],
-                                                                                            item['ahah'],
-                                                                                            item['wow'],
-                                                                                            item['sigh']]):
+            # @TODO: some posts missing just only 1 cmt, need to fix
+            if item['comments'] - 1 == len(item['comment_items']) and item['reactions'] == sum([item['likes'],
+                                                                                                item['love'],
+                                                                                                item['grrr'],
+                                                                                                item['ahah'],
+                                                                                                item['wow'],
+                                                                                                item['sigh']]):
                 return item
             else:
-                raise DropItem('Dropping this post, wait for crawling comments and reaction complete....')
+                print(f'DEBUG POST {item["comments"]}, {len(item["comment_items"])}, {item["reactions"]}')
+                raise DropItem(
+                    'Dropping this post, wait for crawling comments and reaction complete....')
         else:
             raise DropItem('Ignore CommentItem')
