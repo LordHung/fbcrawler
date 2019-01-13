@@ -125,14 +125,14 @@ def comments_strip(string):
     try:
         return int(string[0].rstrip(' Comments'))
     except:
-        print(f'ERRRRRRRRRRR {string}')
+        print(f'No comments {string}')
 
 
 def shares_strip(string):
     try:
         return int(string[0].rstrip(' Shares'))
     except:
-        print(f'ERRRRRRRRRRR {string}')
+        print(f'Can\'t get shares {string}')
 
 
 def reactions_strip(string):
@@ -161,7 +161,13 @@ def simplify_url(string):
 
 
 def cast_to_int(string):
-    return int(string[0])
+    if string[0]:
+        thousand = re.match('(\d+)K', string[0])
+        if thousand:
+            result = int(thousand.group(1)) * 1000
+        else:
+            result = int(string[0])
+        return result
 
 
 class PostItem(scrapy.Item):

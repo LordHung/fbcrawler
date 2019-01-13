@@ -92,5 +92,7 @@ ITEM_PIPELINES = {
 FEED_EXPORT_FIELDS = ['source', 'url', 'date', 'text', 'shares', 'reactions', 'likes', 'ahah', 'love', 'wow',
                       'sigh', 'grrr', 'comments', 'comment_items']  # specifies the order of the column to export as CSV
 FEED_EXPORT_ENCODING = 'utf-8'
-DUPEFILTER_DEBUG = True
+DUPEFILTER_DEBUG = False
 LOG_LEVEL = 'DEBUG'
+LOG_STDOUT = True
+LOG_FILE = 'report.txt'

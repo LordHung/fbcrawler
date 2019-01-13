@@ -83,11 +83,16 @@ class FacebookSpider(scrapy.Spider):
         )
 
     def parse_page(self, response):
+        if not os.path.isfile('page.html'):
+            with open('page.html', 'wb') as f:
+                f.write(response.body)
         # select all posts
         for post in response.xpath("//div[contains(@data-ft, 'top_level_post_id')]"):
             new = ItemLoader(item=PostItem(), selector=post)
             new.add_xpath('comments', ".//div/a[contains(text(), 'Comments')]/text()")
             new.add_xpath('url', ".//a[contains(text(), 'Full Story')]/@href")
+            # Cannot get shares because the body doesnot contains it
+            # new.add_xpath('shares', ".//*[contains(text(), 'Shares')]/text()")
 
             # returns full post-link in a list
             post = post.xpath(".//a[contains(text(), 'Full Story')]/@href").extract()
@@ -105,7 +110,6 @@ class FacebookSpider(scrapy.Spider):
                 yield scrapy.Request(next_page, callback=self.parse_page)
 
     def parse_post(self, response):
-        import os.path
         if not os.path.isfile('apost.html'):
             with open('apost.html', 'wb') as f:
                 f.write(response.body)
@@ -118,10 +122,11 @@ class FacebookSpider(scrapy.Spider):
         new.add_xpath('date', '//div/div/abbr/text()')
         new.add_xpath('text', '//div[@data-ft]//p//text() | //div[@data-ft]/div[@class]/div[@class]/text()')
         new.add_xpath('reactions', "//a[contains(@href, 'reaction/profile')]/div/div/text()")
-        new.add_xpath('shares', "//*[contains(text(), 'Shares')]/text()")
+        # new.add_xpath('shares', "//*[contains(text(), 'Shares')]/text()")
         comments = new.get_output_value('comments') or 0
         if comments:
-            comments_url = self.root_url + re.sub(r'&refid.*$', '', response.meta['item'].get_output_value('url'))
+            # comments_url = self.root_url + re.sub(r'&refid.*$', '', response.meta['item'].get_output_value('url'))
+            comments_url = response.urljoin(response.meta['item'].get_output_value('url'))
             yield scrapy.Request(comments_url, callback=self.parse_comments_link, dont_filter=True, meta={'item': new})
 
         reactions = response.xpath("//div[contains(@id, 'sentence')]/a[contains(@href, 'reaction/profile')]/@href")
@@ -195,7 +200,7 @@ class FacebookSpider(scrapy.Spider):
             next_page = response.urljoin(next_page[0].extract())
             yield scrapy.Request(next_page, callback=self.parse_comments_link, meta={'item': root})
 
-    def parse_comments_link(self, response):
+    def parse_comments_link_semi(self, response):
         root = response.meta['item']
         coms = []
         for com in response.xpath('//div[@id="root"]/div/div/div/div/div'):
@@ -217,20 +222,51 @@ class FacebookSpider(scrapy.Spider):
         root.add_value('comment_items', [c for c in coms if c])
 
         next_page = response.xpath("//div[contains(@id, 'see_next')]/a/@href")
+        # if len(next_page) > 0:
+        #     next_page = response.urljoin(next_page[0].extract())
+        #     yield scrapy.Request(next_page, callback=self.parse_comments_link, meta={'item': root})
+
+    def parse_comments_link(self, response):
+        root = ItemLoader(item=PostItem(), parent=response.meta['item'])
+        coms = []
+        for com in response.xpath('//div[@id="root"]/div/div[2]/div/div[5]/div | //div[@id="root"]/div/div/div/div/div'):
+            new = ItemLoader(item=CommentItem(), selector=com)
+            new.add_xpath('source', "./div/h3/a/text() | ./div/div/h3/a/text()")
+            new.add_xpath('text', "./div/div/span[not(contains(text(),' · '))]/text() | ./div/div/text()")
+            # if not new.get_collected_values('source') and not new.get_collected_values('text'):
+            #     continue
+            self.log(f'COM {new.load_item()}')
+            replies = com.xpath('./div/div/div/div/a[contains(text(), "repli")]/text()').extract()
+            rep_link = com.xpath('./div/div/div/div/a[contains(text(), "repli")]/@href').extract()
+            self.log(f'REPLIN {replies} {rep_link}')
+
+            if replies and len(replies):
+                found = re.search('(\d+) replies', replies[0])
+                if found:
+                    num_reps = found.group(1)
+                    rep = response.urljoin(rep_link[0])
+                    yield scrapy.Request(rep, callback=self.parse_replies, meta={'com': new})
+            coms.append(new.load_item())
+
+        next_page = response.xpath("//div[contains(@id, 'see_next')]/a/@href")
         if len(next_page) > 0:
             next_page = response.urljoin(next_page[0].extract())
             yield scrapy.Request(next_page, callback=self.parse_comments_link, meta={'item': root})
 
+        root.add_value('comment_items', [c for c in coms if c])
+        yield root.load_item()
+
     def parse_replies(self, response):
-        com = response.meta['com']
+        com = ItemLoader(item=CommentItem(), parent=response.meta['com'])
         reps = []
         if not os.path.isfile('check3.html'):
             with open('check3.html', 'wb') as f:
                 f.write(response.body)
-        for rep in response.xpath("//div[contains(@id, 'root')]/div/div/div"):
+        for rep in response.xpath(" //div[@id='root']/div/div[3]/div/div | //div[@id='root']/div/div/div"):
             new = ItemLoader(item=CommentItem(), selector=rep)
             new.add_xpath('source', ".//h3/a/text()")
             new.add_xpath('text', ".//span[not(contains(text(), ' · ')) and not(contains(text(), 'View more'))]/text() | .//div/text()")
+            self.log(f'REP {new.load_item()}')
             reps.append(new.load_item())
-            # yield new.load_item()
         com.add_value('replies', [r for r in reps if r])
+        yield com.load_item()
