@@ -136,6 +136,7 @@ def shares_strip(string):
 
 
 def reactions_strip(string):
+    print(f'DEBUG REACTIONS: {string}')
     friends = 1 + string[0].count(',')
     e = 1 + string[0].count(' e ')
     string = string[0].split()[::-1]
@@ -152,7 +153,7 @@ def reactions_strip(string):
     if not string.isdigit():
         result = e
     else:
-        result = int(string) + friends
+        result = int(string) + int(friends)
     return int(result)
 
 
@@ -161,13 +162,14 @@ def simplify_url(string):
 
 
 def cast_to_int(string):
+    print(f'DEBUG react value {string}')
     if string[0]:
-        thousand = re.match('(\d+)K', string[0])
+        thousand = string[0].split('K')[0] if 'K' in string[0] else 0
         if thousand:
-            result = int(thousand.group(1)) * 1000
+            result = float(thousand) * 1000.0
         else:
-            result = int(string[0])
-        return result
+            result = string[0]
+        return int(result)
 
 
 class PostItem(scrapy.Item):
@@ -189,11 +191,9 @@ class PostItem(scrapy.Item):
     comment_items = scrapy.Field()
     commentators = scrapy.Field(output_processor=Join(separator=u'\n'))
 
-    reactions = scrapy.Field(output_processor=reactions_strip)  # num of reactions
+    reactions = scrapy.Field(output_processor=cast_to_int)
 
-    likes = scrapy.Field(
-        output_processor=reactions_strip
-    )
+    likes = scrapy.Field(output_processor=cast_to_int)
     ahah = scrapy.Field(output_processor=cast_to_int)
     love = scrapy.Field(output_processor=cast_to_int)
     wow = scrapy.Field(output_processor=cast_to_int)

@@ -14,21 +14,26 @@ from fbcrawler.items import CommentItem, PostItem
 
 class FbcrawlerPipeline(object):
     def process_item(self, item, spider):
-        if not isinstance(item, CommentItem):
+        if isinstance(item, PostItem):
             item.setdefault('shares', 0)
             item.setdefault('likes', 0)
             item.setdefault('reactions', 0)
             item.setdefault('comments', 0)
+            item.setdefault('comment_items', [])
             item.setdefault('wow', 0)
             item.setdefault('grrr', 0)
             item.setdefault('love', 0)
             item.setdefault('ahah', 0)
             item.setdefault('sigh', 0)
-            # if item['date'] < datetime(2017, 1, 1).date():
-            #     raise DropItem("Dropping element because it's older than 01/01/2017")
-            # elif item['date'] > datetime(2018, 3, 4).date():
-            #     raise DropItem("Dropping element because it's newer than 04/03/2018")
+            print(f'TEST {item["comments"]}, {len(item["comment_items"])}, {item["reactions"]}')
+            if item['comments'] == len(item['comment_items']) and item['reactions'] == sum([item['likes'],
+                                                                                            item['love'],
+                                                                                            item['grrr'],
+                                                                                            item['ahah'],
+                                                                                            item['wow'],
+                                                                                            item['sigh']]):
+                return item
+            else:
+                raise DropItem('Dropping this post, wait for crawling comments and reaction complete....')
         else:
-            pass
-
-        return item
+            raise DropItem('Ignore CommentItem')
