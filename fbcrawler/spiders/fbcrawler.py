@@ -126,9 +126,6 @@ class FacebookSpider(scrapy.Spider):
         new = ItemLoader(item=PostItem(),
                          response=response,
                          parent=response.meta['item'])
-        if not os.path.isfile('react.html'):
-            with open('react.html', 'wb') as f:
-                f.write(response.body)
         new.add_xpath('likes', "//a[contains(@href, 'reaction_type=1')]/span/text()")
         new.add_xpath('love', "//a[contains(@href, 'reaction_type=2')]/span/text()")
         new.add_xpath('wow', "//a[contains(@href, 'reaction_type=3')]/span/text()")
