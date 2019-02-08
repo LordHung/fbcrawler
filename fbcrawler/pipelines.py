@@ -38,4 +38,4 @@ class FbcrawlerPipeline(object):
                 raise DropItem(
                     'Dropping this post, wait for crawling comments and reaction complete....')
         else:
-            raise DropItem('Ignore CommentItem')
+            raise DropItem('Ignore CommentItem: comments and replies')
