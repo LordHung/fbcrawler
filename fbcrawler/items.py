@@ -59,7 +59,9 @@ def parse_date(date):
     # things to match:
     #Yesterday at 2:10
     #Now
-    #5 hrs
+    #5 hrs/ 5 hr
+    #3 mins
+    #just now
     #21 dec
     #29 may at 13:21
     #12 july 2018
@@ -80,7 +82,7 @@ def parse_date(date):
         #yesterday
         elif date[0] == 'yesterday':
             day = int(str(datetime.now().date() - timedelta(days=1)).split(sep='-')[2])
-        elif date[1] == 'hrs':  # hack
+        elif date[1] in ['hrs', 'hr', 'mins', 'min', 'secs', 'sec', 'now']:
             day = int(str(datetime.now().date() - timedelta(days=1)).split(sep='-')[2])
 
         #day with 3 month length of this year
