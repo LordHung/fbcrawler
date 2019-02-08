@@ -78,8 +78,10 @@ def parse_date(date):
             #pass
 
         #yesterday
-        elif date[0] == 'yesterday' or (date[1] == 'hrs'):
-            day = int(str(datetime.now().date() - timedelta(1)).split(sep='-')[2])
+        elif date[0] == 'yesterday':
+            day = int(str(datetime.now().date() - timedelta(days=1)).split(sep='-')[2])
+        elif date[1] == 'hrs':  # hack
+            day = int(str(datetime.now().date() - timedelta(days=1)).split(sep='-')[2])
 
         #day with 3 month length of this year
         elif (len(date) == 2 and len(date[1]) == 3) or (len(date) == 4 and len(date[1]) == 3):
@@ -118,13 +120,14 @@ def parse_date(date):
             return f'{date}'
     except:
         return f'{date}'
+    print(f'DEBUG DATE {year} {month} {day}')
     date = datetime(year, month, day)
     return date.date()
 
 
 def comments_strip(string):
     if len(string):
-        return int(string[0].rstrip(' Comments'))
+        return int(string[0].rstrip(' Comments').replace(',', ''))
 
 
 def shares_strip(string):
@@ -138,9 +141,11 @@ def simplify_url(string):
 
 def cast_to_int(string):
     if len(string):
+        # if type(string) == list:
+        #     return len(string)
         result = string[0]
         thousand = result.split('K')[0] if 'K' in result else 0
-        you_and_others = re.match('You and (\d+) others', result)
+        you_and_others = re.match('You and (\\d+) others', result)
         if you_and_others:
             result = int(you_and_others.group(1)) + 1
         elif thousand:
@@ -181,5 +186,6 @@ class CommentItem(scrapy.Item):
     source = scrapy.Field(output_processor=TakeFirst())
 
     text = scrapy.Field(output_processor=Join(separator=u''))
-    replies = scrapy.Field(output_processor=cast_to_int)
+    # replies = scrapy.Field(output_processor=cast_to_int)
+    replies = scrapy.Field()
     reply_items = scrapy.Field()
