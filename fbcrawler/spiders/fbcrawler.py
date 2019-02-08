@@ -152,7 +152,7 @@ class FacebookSpider(scrapy.Spider):
                     yield scrapy.Request(rep, callback=self.parse_replies, meta={'com': new, 'item': root})
             coms.append(new.load_item())
 
-        next_page = response.xpath("//div[contains(@id, 'see_next')]/a/@href")
+        next_page = response.xpath("//div[contains(@id, 'see_next')]/a/@href | //div[contains(@id, 'see_prev')]/a/@href")
         if len(next_page) > 0:
             next_page = response.urljoin(next_page[0].extract())
             yield scrapy.Request(next_page, callback=self.parse_comments, meta={'item': root})
