@@ -26,16 +26,22 @@ class FbcrawlerPipeline(object):
             item.setdefault('ahah', 0)
             item.setdefault('sigh', 0)
             # @TODO: some posts missing just only 1 cmt, need to fix
-            if item['comments'] - 1 == len(item['comment_items']) and item['reactions'] == sum([item['likes'],
-                                                                                                item['love'],
-                                                                                                item['grrr'],
-                                                                                                item['ahah'],
-                                                                                                item['wow'],
-                                                                                                item['sigh']]):
-                return item
+            # if (item['comments'] == len(item['comment_items']) or item['comments'] - 1 == len(item['comment_items']))\
+            if (len(item['comment_items']) >= item['comments'])\
+                and item['reactions'] == sum([item['likes'],
+                                              item['love'],
+                                              item['grrr'],
+                                              item['ahah'],
+                                              item['wow'],
+                                              item['sigh']]):
+                if spider.post_count < spider.post_limit:
+                    spider.post_count += 1
+                    return item
+                else:
+                    spider.crawler.engine.close_spider(self, reason=f'limit {spider.post_count} posts exceeded!')
             else:
                 print(f'DEBUG POST {item["comments"]}, {len(item["comment_items"])}, {item["reactions"]}')
                 raise DropItem(
-                    'Dropping this post, wait for crawling comments and reaction complete....')
+                    f'Dropping this post, get {len(item["comment_items"])} already, wait for crawling comments and reaction complete....')
         else:
             raise DropItem('Ignore CommentItem: comments and replies')
