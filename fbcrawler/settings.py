@@ -89,6 +89,7 @@ ITEM_PIPELINES = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+# CLOSESPIDER_ITEMCOUNT = 5
 FEED_EXPORT_FIELDS = ['source', 'url', 'date', 'text', 'reactions', 'likes', 'ahah', 'love', 'wow',
                       'sigh', 'grrr', 'comments', 'comment_items']  # specifies the order of the column to export as CSV
 FEED_EXPORT_ENCODING = 'utf-8'
