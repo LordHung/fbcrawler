@@ -26,7 +26,8 @@ class FacebookSpider(scrapy.Spider):
             raise ValueError('You need to provide a valid page name to crawl!')
         else:
             self.page = page
-
+        self.post_count = 0
+        self.post_limit = 5
         self.start_urls = ['https://m.facebook.com/login/?ref=dbl&fl']
         self.root_url = 'https://m.facebook.com'
 
@@ -137,6 +138,16 @@ class FacebookSpider(scrapy.Spider):
     def parse_comments(self, response):
         root = ItemLoader(item=PostItem(), parent=response.meta['item'])
         coms = []
+        # next_page = response.xpath("//div[contains(@id, 'see_next')]/a/@href")
+
+        # next_page = response.xpath("//div[contains(@id, 'see_next')]/a/@data-ajaxify-href")
+        # prev_page = response.xpath("//div[contains(@id, 'see_prev')]/a/@data-ajaxify-href")
+        # if len(next_page) > 0:
+        #     # next_page = response.urljoin(next_page[0].extract())
+        #     # yield scrapy.Request(next_page, callback=self.parse_comments, meta={'item': root})
+        #     next_page = next_page[0].extract()
+        #     yield response.follow(next_page, callback=self.parse_comments, meta={'item': root})
+
         for com in response.xpath('//div[@id="root"]/div/div/div/div/div'):
             new = ItemLoader(item=CommentItem(), selector=com)
             new.add_xpath('source', "./div/h3/a/text() | ./div/div/h3/a/text()")
@@ -152,10 +163,12 @@ class FacebookSpider(scrapy.Spider):
                     yield scrapy.Request(rep, callback=self.parse_replies, meta={'com': new, 'item': root})
             coms.append(new.load_item())
 
-        next_page = response.xpath("//div[contains(@id, 'see_next')]/a/@href | //div[contains(@id, 'see_prev')]/a/@href")
-        if len(next_page) > 0:
-            next_page = response.urljoin(next_page[0].extract())
-            yield scrapy.Request(next_page, callback=self.parse_comments, meta={'item': root})
+        prev_page = response.xpath("//div[contains(@id, 'see_prev')]/a/@href")
+        if len(prev_page) > 0:
+            # yield scrapy.Request(prev_page, callback=self.parse_comments, meta={'item': root})
+            # prev_page = response.urljoin(prev_page[0].extract())
+            prev_page = prev_page[0].extract()
+            yield response.follow(prev_page, callback=self.parse_comments, meta={'item': root})
         root.add_value('comment_items', [c for c in coms if c])
         yield root.load_item()
 
