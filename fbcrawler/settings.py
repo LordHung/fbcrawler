@@ -23,7 +23,7 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-#CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS = 100000
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -89,11 +89,12 @@ ITEM_PIPELINES = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
-FEED_EXPORT_FIELDS = ['source', 'url', 'date', 'text', 'shares', 'reactions', 'likes', 'ahah', 'love', 'wow',
+FEED_EXPORT_FIELDS = ['source', 'url', 'date', 'text', 'reactions', 'likes', 'ahah', 'love', 'wow',
                       'sigh', 'grrr', 'comments', 'comment_items']  # specifies the order of the column to export as CSV
 FEED_EXPORT_ENCODING = 'utf-8'
 DUPEFILTER_DEBUG = False
 LOG_LEVEL = 'DEBUG'
 LOG_STDOUT = True
+LOG_STDERR = True
 LOG_FILE = 'report.txt'
-URLLENGTH_LIMIT = (100000)
+URLLENGTH_LIMIT = (1000000)
