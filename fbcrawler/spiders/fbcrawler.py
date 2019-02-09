@@ -4,7 +4,7 @@ import os
 
 from scrapy.loader import ItemLoader
 from scrapy.http import FormRequest
-from fbcrawler.items import PostItem, CommentItem
+from fbcrawler.fbcrawler.items import PostItem, CommentItem
 
 
 class FacebookSpider(scrapy.Spider):
@@ -13,7 +13,7 @@ class FacebookSpider(scrapy.Spider):
     '''
     name = 'fb'
 
-    def __init__(self, email='', password='', page='', **kwargs):
+    def __init__(self, email='', password='', page='', limit=5, **kwargs):
         super()
 
         if not email or not password:
@@ -25,9 +25,9 @@ class FacebookSpider(scrapy.Spider):
         if not page:
             raise ValueError('You need to provide a valid page name to crawl!')
         else:
-            self.page = page
+            self.page = '/' + page
         self.post_count = 0
-        self.post_limit = 5
+        self.post_limit = limit
         self.start_urls = ['https://m.facebook.com/login/?ref=dbl&fl']
         self.root_url = 'https://m.facebook.com'
 

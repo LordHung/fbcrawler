@@ -5,11 +5,14 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import re
+import json
 
 from datetime import datetime
 
-from scrapy.exceptions import DropItem
-from fbcrawler.items import CommentItem, PostItem
+from scrapy.exceptions import DropItem, CloseSpider
+from fbcrawler.fbcrawler.items import CommentItem, PostItem
+from app import sess, vocab, predictions, input_x, dropout
+from serve import predict_one_sentence_v2
 
 
 class FbcrawlerPipeline(object):
@@ -25,8 +28,6 @@ class FbcrawlerPipeline(object):
             item.setdefault('love', 0)
             item.setdefault('ahah', 0)
             item.setdefault('sigh', 0)
-            # @TODO: some posts missing just only 1 cmt, need to fix
-            # if (item['comments'] == len(item['comment_items']) or item['comments'] - 1 == len(item['comment_items']))\
             if (len(item['comment_items']) >= item['comments'])\
                 and item['reactions'] == sum([item['likes'],
                                               item['love'],
@@ -35,7 +36,14 @@ class FbcrawlerPipeline(object):
                                               item['wow'],
                                               item['sigh']]):
                 if spider.post_count < spider.post_limit:
+                    item['date'] = str(item['date'])
                     spider.post_count += 1
+                    for i in item['comment_items']:
+                        i['is_positive'] = predict_one_sentence_v2(sess, vocab, predictions, input_x, dropout, i)
+                        if i.get('replies'):
+                            for rep in i['replies']:
+                                rep['is_positive'] = predict_one_sentence_v2(sess, vocab, predictions,
+                                                                             input_x, dropout, rep)
                     return item
                 else:
                     spider.crawler.engine.close_spider(self, reason=f'limit {spider.post_count} posts exceeded!')

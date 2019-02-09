@@ -188,6 +188,7 @@ class CommentItem(scrapy.Item):
     source = scrapy.Field(output_processor=TakeFirst())
 
     text = scrapy.Field(output_processor=Join(separator=u''))
+    is_positive = scrapy.Field()
     # replies = scrapy.Field(output_processor=cast_to_int)
     replies = scrapy.Field()
     reply_items = scrapy.Field()

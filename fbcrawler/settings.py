@@ -11,8 +11,8 @@
 
 BOT_NAME = 'fbcrawler'
 
-SPIDER_MODULES = ['fbcrawler.spiders']
-NEWSPIDER_MODULE = 'fbcrawler.spiders'
+SPIDER_MODULES = ['fbcrawler.fbcrawler.spiders']
+NEWSPIDER_MODULE = 'fbcrawler.fbcrawler.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -66,7 +66,8 @@ CONCURRENT_REQUESTS = 100000
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'fbcrawler.pipelines.FbcrawlerPipeline': 1,
+    'fbcrawler.fbcrawler.pipelines.FbcrawlerPipeline': 100,
+    # 'fbcrawler.fbcrawler.pipelines.JsonWriterPipeline': 200,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -99,3 +100,4 @@ LOG_STDOUT = True
 LOG_STDERR = True
 LOG_FILE = 'report.txt'
 URLLENGTH_LIMIT = (1000000)
+FEED_FORMAT = 'json'
